@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { GlobalStyle } from './GlobalStyle';
 import { Searchbar } from './SearchBar/Searchbar';
@@ -8,81 +8,71 @@ import { LoadMore } from './Button/Button';
 import { Loader } from './Loader/Loader';
 import { Modal } from './Modal/Modal';
 
-export class App extends Component {
-  state = {
-    query: ``,
-    images: [],
-    page: 1,
-    loading: false,
-    error: false,
-    showBtnLoadMore: false,
-    showModal: false,
-    dataModal: { largeImageURL: null, tags: null },
-  };
+export const App = () => {
+  const [query, setQuery] = useState(``);
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [showBtnLoadMore, setShowBtnLoadMore] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [dataModal, setDataModal] = useState({
+    largeImageURL: null,
+    tags: null,
+  });
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { query, page } = this.state;
-
-    if (
-      prevState.query !== this.state.query ||
-      prevState.page !== this.state.page
-    ) {
+  useEffect(() => {
+    if (query === ``) {
+      return;
+    }
+    async function getImages() {
       try {
-        this.setState({ loading: true, error: false });
+        setLoading(true);
+        setError(false);
         const images = await fetchImages(query, page);
         const totalPages = Math.ceil(images.data.totalHits / 12);
-        this.setState(prevState => ({
-          images: [...prevState.images, ...images.data.hits],
-          showBtnLoadMore: this.state.page < totalPages,
-        }));
+        setImages(prevState => [...prevState, ...images.data.hits]);
+        setShowBtnLoadMore(page < totalPages);
       } catch (error) {
-        this.setState({ error: true });
+        setError(true);
       } finally {
-        this.setState({ loading: false });
+        setLoading(false);
       }
     }
-  }
+    getImages();
+  }, [query, page]);
 
-  handleFormSubmit = query => {
-    this.setState({
-      query,
-      images: [],
-      page: 1,
-    });
+  const handleFormSubmit = query => {
+    setQuery(query);
+    setImages([]);
+    setPage(1);
   };
 
-  onLoadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const onLoadMore = () => {
+    setPage(prevState => prevState + 1);
   };
 
-  onOpenModal = (largeImageURL, tags) => {
-    this.setState({ showModal: true, dataModal: { largeImageURL, tags } });
+  const onOpenModal = (largeImageURL, tags) => {
+    setShowModal(true);
+    setDataModal({ largeImageURL, tags });
   };
 
-  onCloseModal = () => {
-    this.setState({ showModal: false });
+  const onCloseModal = () => {
+    setShowModal(false);
   };
 
-  render() {
-    const { loading, error, images, showBtnLoadMore, showModal, dataModal } =
-      this.state;
-    return (
-      <div>
-        <Searchbar onSubmit={this.handleFormSubmit} />
-        {loading && <Loader />}
-        {error && !loading && <div>Oops... Something went wrong... </div>}
-        {images.length > 0 && (
-          <ImageGallery images={images} onOpenModal={this.onOpenModal} />
-        )}
-        {showBtnLoadMore && !loading && <LoadMore onClick={this.onLoadMore} />}
-        {showModal && (
-          <Modal isClose={this.onCloseModal} dataModal={dataModal} />
-        )}
-        <GlobalStyle />
-        <Toaster position="top-right" />
-      </div>
-    );
-  }
-}
+  return (
+    <div>
+      <Searchbar onSubmit={handleFormSubmit} />
+      {loading && <Loader />}
+      {error && !loading && <div>Oops... Something went wrong... </div>}
+      {images.length > 0 && (
+        <ImageGallery images={images} onOpenModal={onOpenModal} />
+      )}
+      {showBtnLoadMore && !loading && <LoadMore onClick={onLoadMore} />}
+      {showModal && <Modal isClose={onCloseModal} dataModal={dataModal} />}
+      <GlobalStyle />
+      <Toaster position="top-right" />
+    </div>
+  );
+};
