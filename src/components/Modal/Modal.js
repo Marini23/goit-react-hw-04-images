@@ -1,4 +1,4 @@
-import React, {  useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ModalImg, Overlay } from './Modal.styled';
 
@@ -6,14 +6,18 @@ const modalRoot = document.querySelector(`#modal-root`);
 
 export const Modal = ({ isClose, dataModal }) => {
   useEffect(() => {
+    const isCloseEscape = e => {
+      if (e.code === `Escape`) {
+        isClose();
+      }
+    };
     window.addEventListener('keydown', isCloseEscape);
-  });
 
-  const isCloseEscape = e => {
-    if (e.code === `Escape`) {
-      isClose();
-    }
-  };
+    return () => {
+      window.removeEventListener('keydown', isCloseEscape);
+    };
+  }, [isClose]);
+
   const onBackdropeClick = e => {
     if (e.target === e.currentTarget) {
       isClose();
@@ -28,4 +32,3 @@ export const Modal = ({ isClose, dataModal }) => {
     modalRoot
   );
 };
-
