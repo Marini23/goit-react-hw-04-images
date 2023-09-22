@@ -1,37 +1,31 @@
-import React, { Component } from 'react';
+import React, {  useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ModalImg, Overlay } from './Modal.styled';
 
 const modalRoot = document.querySelector(`#modal-root`);
 
-export class Modal extends Component {
-  componentDidMount() {
-    window.addEventListener('keydown', this.isCloseEscape);
-  }
+export const Modal = ({ isClose, dataModal }) => {
+  useEffect(() => {
+    window.addEventListener('keydown', isCloseEscape);
+  });
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.isCloseEscape);
-  }
-  isCloseEscape = e => {
+  const isCloseEscape = e => {
     if (e.code === `Escape`) {
-      this.props.isClose();
+      isClose();
     }
   };
-  onBackdropeClick = e => {
+  const onBackdropeClick = e => {
     if (e.target === e.currentTarget) {
-      this.props.isClose();
+      isClose();
     }
   };
+  return createPortal(
+    <Overlay onClick={onBackdropeClick}>
+      <ModalImg>
+        <img src={dataModal.largeImageURL} alt={dataModal.alt} />
+      </ModalImg>
+    </Overlay>,
+    modalRoot
+  );
+};
 
-  render() {
-    const { dataModal } = this.props;
-    return createPortal(
-      <Overlay onClick={this.onBackdropeClick}>
-        <ModalImg>
-          <img src={dataModal.largeImageURL} alt={dataModal.alt} />
-        </ModalImg>
-      </Overlay>,
-      modalRoot
-    );
-  }
-}
